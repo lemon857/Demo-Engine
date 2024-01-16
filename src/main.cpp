@@ -4,6 +4,7 @@
 #include <EngineCore/Engine/Window.h>
 #include <EngineCore/Renderer/Renderer.h>
 #include <EngineCore/Renderer/Camera.h>
+#include <EngineCore/System/ShadersSettings.h>
 #include <EngineCore/GUI/GUI_place.h>
 #include <EngineCore/GUI/ScrollBox.h>
 #include <EngineCore/GUI/Button.h>
@@ -35,31 +36,51 @@ public:
 		float offset = 11.f;
 
 		m_gui->add_element<GUI::Button>(new GUI::Sprite(ResourceManager::getMaterial("button"), "static"),
-			glm::vec2(50.f, offset), glm::vec2(10.f, 5.f), "hello", ResourceManager::getShaderProgram("textShader"),
+			glm::vec2(50.f, offset), glm::vec2(10.f, 5.f), "hello1", ResourceManager::getShaderProgram("textShader"),
 			ResourceManager::get_font("agaaler"), glm::vec3(1.f), "b1");
 		offset += 11.f;
 
 		m_gui->add_element<GUI::Button>(new GUI::Sprite(ResourceManager::getMaterial("button"), "static"),
-			glm::vec2(50.f, offset), glm::vec2(10.f, 5.f), "hello", ResourceManager::getShaderProgram("textShader"),
+			glm::vec2(50.f, offset), glm::vec2(10.f, 5.f), "hello2", ResourceManager::getShaderProgram("textShader"),
 			ResourceManager::get_font("agaaler"), glm::vec3(1.f), "b2");
 		offset += 11.f;
 
 		m_gui->add_element<GUI::Button>(new GUI::Sprite(ResourceManager::getMaterial("button"), "static"),
-			glm::vec2(50.f, offset), glm::vec2(10.f, 5.f), "hello", ResourceManager::getShaderProgram("textShader"),
+			glm::vec2(50.f, offset), glm::vec2(10.f, 5.f), "hello3", ResourceManager::getShaderProgram("textShader"),
 			ResourceManager::get_font("agaaler"), glm::vec3(1.f), "b3");
 		offset += 11.f;
 
 		m_gui->add_element<GUI::Button>(new GUI::Sprite(ResourceManager::getMaterial("button"), "static"),
-			glm::vec2(50.f, offset), glm::vec2(10.f, 5.f), "hello", ResourceManager::getShaderProgram("textShader"),
+			glm::vec2(50.f, offset), glm::vec2(10.f, 5.f), "hello4", ResourceManager::getShaderProgram("textShader"),
 			ResourceManager::get_font("agaaler"), glm::vec3(1.f), "b4");
+		offset += 11.f;
+
+		m_gui->add_element<GUI::Button>(new GUI::Sprite(ResourceManager::getMaterial("button"), "static"),
+			glm::vec2(50.f, offset), glm::vec2(10.f, 5.f), "hello5", ResourceManager::getShaderProgram("textShader"),
+			ResourceManager::get_font("agaaler"), glm::vec3(1.f), "b5");
+		offset += 11.f;
+
+		m_gui->add_element<GUI::Button>(new GUI::Sprite(ResourceManager::getMaterial("button"), "static"),
+			glm::vec2(50.f, offset), glm::vec2(10.f, 5.f), "hello6", ResourceManager::getShaderProgram("textShader"),
+			ResourceManager::get_font("agaaler"), glm::vec3(1.f), "b6");
+		offset += 11.f;
+
+		m_gui->add_element<GUI::Button>(new GUI::Sprite(ResourceManager::getMaterial("button"), "static"),
+			glm::vec2(50.f, offset), glm::vec2(10.f, 5.f), "hello6", ResourceManager::getShaderProgram("textShader"),
+			ResourceManager::get_font("agaaler"), glm::vec3(1.f), "b7");
 
 		m_gui->add_element<GUI::ScrollBox>(new GUI::Sprite(ResourceManager::getMaterial("defaultSprite")),
-			glm::vec2(50.f, 22.f), glm::vec2(12.f, 15.f), "TestScrollbox", 10);
+			glm::vec2(50.f, 50.f), glm::vec2(12.f, 15.f), "TestScrollbox", 10, ResourceManager::getMaterial("default"), false, nullptr, false, false);
 
 		m_gui->get_element<GUI::ScrollBox>("TestScrollbox")->add_element(m_gui->get_element<GUI::Button>("b1"));
 		m_gui->get_element<GUI::ScrollBox>("TestScrollbox")->add_element(m_gui->get_element<GUI::Button>("b2"));
 		m_gui->get_element<GUI::ScrollBox>("TestScrollbox")->add_element(m_gui->get_element<GUI::Button>("b3"));
 		m_gui->get_element<GUI::ScrollBox>("TestScrollbox")->add_element(m_gui->get_element<GUI::Button>("b4"));
+		m_gui->get_element<GUI::ScrollBox>("TestScrollbox")->add_element(m_gui->get_element<GUI::Button>("b5"));
+		m_gui->get_element<GUI::ScrollBox>("TestScrollbox")->add_element(m_gui->get_element<GUI::Button>("b6"));
+		m_gui->get_element<GUI::ScrollBox>("TestScrollbox")->add_element(m_gui->get_element<GUI::Button>("b7"));
+
+		m_gui->get_element<GUI::ScrollBox>("TestScrollbox")->set_active(true);
 
 		m_gui->set_active(true);
 
@@ -109,7 +130,6 @@ public:
 		// clear screen
 		RenderEngine::Renderer::setClearColor(0.33f, 0.33f, 0.33f, 1.f);
 		RenderEngine::Renderer::clearColor();
-
 
 	}
 
