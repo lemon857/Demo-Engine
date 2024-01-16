@@ -1,0 +1,5 @@
+<prop0>=display name on unicode support language
+<prop1>=display name on unicode support language
+<prop2>=display name on unicode support language#use comment demo
+# if line contains '#' is a comment
+# <prop0> - is a name when you will used in get display name from lang pack like array

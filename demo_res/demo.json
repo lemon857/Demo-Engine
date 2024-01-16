@@ -1,0 +1,70 @@
+{
+  "shaders": [
+    {
+      "name": "<name>",
+      "filePath_v": "<relative path from exe>",
+      "filePath_f": "<relative path from exe>",
+      "layout": [ // for set in material
+        {
+          "name": "<name prop>",
+          "typeInt": 1, // get in ShaderProgramLayout.h
+          "minVal": 0,
+          "maxVal": 1
+        }
+      ]
+    }
+  ],
+  "textureAtlases": [
+    {
+      "name": "<name>",
+      "filePath": "<relative path from exe to *.png>",
+      "width": 64,
+      "height": 64,
+      "subTexture_w": 64,
+      "subTexture_h": 64,
+      "subTextures": [
+        "default"
+      ]
+    },
+    {
+      "name": "<name>",
+      "filePath": "<relative path from exe to *.png>",
+      "width": 64,
+      "height": 16,
+      "subTexture_w": 16,
+      "subTexture_h": 16,
+      "subTextures": [
+        "demo0",
+        "demo1",
+        "demo2",
+        "demo3"
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "name": "<name>",
+      "nameShader": "<name shader>",
+      "nameTexture": "<name texture>"
+    }
+  ],
+  "fonts": [
+    {
+      "name": "<name>",
+      "path": "<relative path from exe to *.ttf>",
+      "size": 96 // font size
+    }
+  ],
+  "sounds": [
+    {
+      "name": "<name>",
+      "path": "<relative path from exe to *.flac>"
+    }
+  ],
+  "languages": [
+    {
+      "name": "<name>",
+      "path": "<relative path from exe to *.language>"
+    }
+  ]
+}
