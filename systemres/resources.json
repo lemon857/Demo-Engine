@@ -26,6 +26,49 @@
           "maxVal": 1
         }
       ]
+    },
+    {
+      "name": "default3DShader",
+      "filePath_v": "systemres/shaders/default3DVert.glsl",
+      "filePath_f": "systemres/shaders/default3DFrag.glsl",
+      "layout": [
+        {
+          "name": "ambient_factor",
+          "typeInt": 1,
+          "minVal": 0,
+          "maxVal": 1
+        },
+        {
+          "name": "diffuse_factor",
+          "typeInt": 1,
+          "minVal": 0,
+          "maxVal": 1
+        },
+        {
+          "name": "specular_factor",
+          "typeInt": 1,
+          "minVal": 0,
+          "maxVal": 1
+        },
+        {
+          "name": "shininess",
+          "typeInt": 1,
+          "minVal": 0,
+          "maxVal": 1
+        },
+        {
+          "name": "metalic_factor",
+          "typeInt": 1,
+          "minVal": 0,
+          "maxVal": 1
+        },
+        {
+          "name": "level_graphics",
+          "typeInt": 0,
+          "minVal": 0,
+          "maxVal": 2
+        }
+      ]
     }
   ],
   "textureAtlases": [
@@ -98,6 +141,17 @@
       ]
     },
     {
+      "name": "Castle",
+      "filePath": "systemres/textures/castle.png",
+      "width": 128,
+      "height": 128,
+      "subTexture_w": 128,
+      "subTexture_h": 128,
+      "subTextures": [
+        "default"
+      ]
+    },
+    {
       "name": "Slider_bg",
       "filePath": "systemres/textures/Slider_bg.png",
       "width": 600,
@@ -128,9 +182,19 @@
       "nameTexture": "DefaultTexture"
     },
     {
+      "name": "defaultCube",
+      "nameShader": "default3DShader",
+      "nameTexture": "DefaultTexture"
+    },
+    {
       "name": "defaultSprite",
       "nameShader": "spriteShader",
       "nameTexture": "bg_1"
+    },
+    {
+      "name": "castle",
+      "nameShader": "default3DShader",
+      "nameTexture": "Castle"
     },
     {
       "name": "button",
@@ -184,6 +248,13 @@
     {
       "name": "click",
       "path": "systemres/sounds/click.flac"
+    }
+  ],
+  "models": [
+    {
+      "name": "castle",
+      "path": "systemres/models/castle.obj",
+      "type": "obj"
     }
   ]
 }
