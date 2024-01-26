@@ -28,6 +28,20 @@
       ]
     },
     {
+      "name": "mainShader",
+      "filePath_v": "systemres/shaders/mainVert.glsl",
+      "filePath_f": "systemres/shaders/mainFrag.glsl",
+      "layout": [
+      ]
+    },
+    {
+      "name": "postShader",
+      "filePath_v": "systemres/shaders/postVert.glsl",
+      "filePath_f": "systemres/shaders/postFrag.glsl",
+      "layout": [
+      ]
+    },
+    {
       "name": "default3DShader",
       "filePath_v": "systemres/shaders/default3DVert.glsl",
       "filePath_f": "systemres/shaders/default3DFrag.glsl",

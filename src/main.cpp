@@ -5,12 +5,14 @@
 #include <EngineCore/Engine/Window.h>
 #include <EngineCore/Renderer/Renderer.h>
 #include <EngineCore/Renderer/Camera.h>
+#include <EngineCore/Renderer/FrameBuffer.h>
 #include <EngineCore/Renderer/Material.h>
+#include <EngineCore/Renderer3D/GraphicsObject.h>
 #include <EngineCore/Light/DirectionalLight.h>
 #include <EngineCore/System/ShadersSettings.h>
 #include <EngineCore/System/Input.h>
 #include <EngineCore/Meshes/Cube.h>
-#include <EngineCore/Meshes/ObjModel.h>
+#include <EngineCore/Meshes/GraphicsModel.h>
 #include <EngineCore/Components/Transform.h>
 #include <EngineCore/GUI/GUI_place.h>
 #include <EngineCore/GUI/ScrollBox.h>
@@ -34,6 +36,8 @@ public:
 	}
 	bool init() override
 	{
+		m_framebuffer = new RenderEngine::FrameBuffer();
+
 		GET_DATA_MATERIAL("castle", float, "ambient_factor", 0) = 0.25f;
 		GET_DATA_MATERIAL("castle", float, "diffuse_factor", 0) = 0.1f;
 		GET_DATA_MATERIAL("castle", float, "specular_factor", 0) = 0.0f;
@@ -52,17 +56,21 @@ public:
 
 		m_cam->set_viewport_size(static_cast<float>(m_pWindow->get_size().x), static_cast<float>(m_pWindow->get_size().y));
 
+		m_obj = ResourceManager::getGraphicsObject("castle");
+
 		std::vector<std::string> names;
 		names.push_back("default3DShader");
 
 		m_scene.add_object<DirectionalLight>(names);
 		m_scene.add_object<Cube>(ResourceManager::getMaterial("defaultCube"));
-		m_scene.add_object<ObjModel>(ResourceManager::getGraphicsModel("castle"), ResourceManager::getMaterial("castle"));
+		m_scene.add_object<GraphicsModel>(ResourceManager::getGraphicsObject("castle"), ResourceManager::getMaterial("castle"));
 
 		m_scene.at(1)->addComponent<Transform>(glm::vec3(0.f), glm::vec3(2.f));
-		m_scene.at(2)->addComponent<Transform>(glm::vec3(5.f, 0.f, 0.f), glm::vec3(2.f));
+		m_scene.at(2)->addComponent<Transform>(glm::vec3(0.f, 0.f, 1.f), glm::vec3(2.f));
 
 		m_gui = new GUI::GUI_place(m_cam, ResourceManager::getMaterial("default"));
+
+		m_framebuffer->init(m_pWindow->get_size().x, m_pWindow->get_size().y);
 
 		ResourceManager::get_font("agaaler")->set_scale(0.2f);
 
@@ -116,6 +124,29 @@ public:
 		m_gui->get_element<GUI::ScrollBox>("TestScrollbox")->set_active(true);
 
 		m_gui->set_active(false);
+
+		float quadVert[] =
+		{
+			-1.f, 1.f, 0.f, 1.f,
+			-1.f, -1.f, 0.f, 0.f,
+			1.f, -1.f, 1.f, 0.f,
+
+			-1.f, 1.f, 0.f, 1.f,
+			1.f, -1.f, 1.f, 0.f,
+			1.f, 1.f, 1.f, 1.f
+		};
+		glGenVertexArrays(1, &quadVAO);
+		glGenBuffers(1, &quadVBO);
+		glBindVertexArray(quadVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVert), &quadVert, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+		ResourceManager::getShaderProgram("postShader")->use();
+		ResourceManager::getShaderProgram("postShader")->setInt("texture1", 0);
 
 		return true;
 	}
@@ -211,20 +242,42 @@ public:
 
 	void on_render()
 	{
-		// clear screen
-		RenderEngine::Renderer::setClearColor(0.33f, 0.33f, 0.33f, 1.f);
+		m_framebuffer->bind();
+		RenderEngine::Renderer::setDepthTest(true);
+		RenderEngine::Renderer::setClearColor(0.1f, 0.1f, 0.1f, 1.f);
 		RenderEngine::Renderer::clearColor();
 
 		m_scene.render(m_cam->get_projection_matrix() * m_cam->get_view_matrix());
+
+		glBindVertexArray(0);
+		// real draw --------------------------------------------------------------------------------------
+		m_framebuffer->unbind();
+		RenderEngine::Renderer::setDepthTest(false);
+		RenderEngine::Renderer::setClearColor(1.f, 1.f, 1.f, 1.f);
+		glClear(GL_COLOR_BUFFER_BIT);
+		//RenderEngine::Renderer::clearColor();
+
+		ResourceManager::getShaderProgram("postShader")->use();
+
+		glBindVertexArray(quadVAO);
+		m_framebuffer->bind_texture();
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		m_framebuffer->unbind_texture();
 	}
 
 	void on_ui_render()
 	{
-		m_gui->on_render();
-		
+		m_gui->on_render();		
 	}
 
-private:
+private:	
+	RenderEngine::FrameBuffer* m_framebuffer;
+
+	std::shared_ptr<GraphicsObject> m_obj;
+
+	unsigned int quadVAO, quadVBO;
+
 	GUI::GUI_place* m_gui;
 	Camera* m_cam;
 	Scene m_scene;
