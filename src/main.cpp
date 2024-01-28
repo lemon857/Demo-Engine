@@ -5,7 +5,7 @@
 #include <EngineCore/Engine/Window.h>
 #include <EngineCore/Renderer/Renderer.h>
 #include <EngineCore/Renderer/Camera.h>
-#include <EngineCore/Renderer/FrameBuffer.h>
+#include <EngineCore/Renderer/PostProcessor.h>
 #include <EngineCore/Renderer/Material.h>
 #include <EngineCore/Renderer3D/GraphicsObject.h>
 #include <EngineCore/Light/DirectionalLight.h>
@@ -23,6 +23,8 @@
 
 #define GET_DATA_MATERIAL(name_material, type, name_data, index) ResourceManager::getMaterial(name_material)->get_data<type>(name_data)[index]
 
+bool isKeyPressed = false;
+
 class TestApp : public Application
 {
 public:
@@ -36,21 +38,24 @@ public:
 	}
 	bool init() override
 	{
-		m_framebuffer = new RenderEngine::FrameBuffer();
+		m_postprc = new RenderEngine::PostProcessor(ResourceManager::getShaderProgram("postShader"), m_pWindow->get_size().x, m_pWindow->get_size().y);
 
-		GET_DATA_MATERIAL("castle", float, "ambient_factor", 0) = 0.25f;
+		GET_DATA_MATERIAL("castle", float, "ambient_factor", 0) = 0.5f;
 		GET_DATA_MATERIAL("castle", float, "diffuse_factor", 0) = 0.1f;
 		GET_DATA_MATERIAL("castle", float, "specular_factor", 0) = 0.0f;
 		GET_DATA_MATERIAL("castle", float, "metalic_factor", 0) = 0.0f;
 		GET_DATA_MATERIAL("castle", float, "shininess", 0) = 0.1f;
 		GET_DATA_MATERIAL("castle", int, "level_graphics", 0) = 1;
 
-		GET_DATA_MATERIAL("defaultCube", float, "ambient_factor", 0) = 0.25f;
+		GET_DATA_MATERIAL("defaultCube", float, "ambient_factor", 0) = 0.5f;
 		GET_DATA_MATERIAL("defaultCube", float, "diffuse_factor", 0) = 0.1f;
 		GET_DATA_MATERIAL("defaultCube", float, "specular_factor", 0) = 0.0f;
 		GET_DATA_MATERIAL("defaultCube", float, "metalic_factor", 0) = 0.0f;
 		GET_DATA_MATERIAL("defaultCube", float, "shininess", 0) = 0.1f;
 		GET_DATA_MATERIAL("defaultCube", int, "level_graphics", 0) = 1;
+
+		GET_DATA_MATERIAL("default", float, "sourceColor", 2) = 1.f;
+		GET_DATA_MATERIAL("default", float, "sourceColor", 3) = 1.f;
 
 		m_cam = new Camera();
 
@@ -69,8 +74,6 @@ public:
 		m_scene.at(2)->addComponent<Transform>(glm::vec3(0.f, 0.f, 1.f), glm::vec3(2.f));
 
 		m_gui = new GUI::GUI_place(m_cam, ResourceManager::getMaterial("default"));
-
-		m_framebuffer->init(m_pWindow->get_size().x, m_pWindow->get_size().y);
 
 		ResourceManager::get_font("agaaler")->set_scale(0.2f);
 
@@ -123,30 +126,7 @@ public:
 
 		m_gui->get_element<GUI::ScrollBox>("TestScrollbox")->set_active(true);
 
-		m_gui->set_active(false);
-
-		float quadVert[] =
-		{
-			-1.f, 1.f, 0.f, 1.f,
-			-1.f, -1.f, 0.f, 0.f,
-			1.f, -1.f, 1.f, 0.f,
-
-			-1.f, 1.f, 0.f, 1.f,
-			1.f, -1.f, 1.f, 0.f,
-			1.f, 1.f, 1.f, 1.f
-		};
-		glGenVertexArrays(1, &quadVAO);
-		glGenBuffers(1, &quadVBO);
-		glBindVertexArray(quadVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVert), &quadVert, GL_STATIC_DRAW);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-
-		ResourceManager::getShaderProgram("postShader")->use();
-		ResourceManager::getShaderProgram("postShader")->setInt("texture1", 0);
+		m_gui->set_active(true);
 
 		return true;
 	}
@@ -156,6 +136,7 @@ public:
 		m_event_dispather.add_event_listener<EventWindowResize>([&](EventWindowResize& e) {
 			m_cam->set_viewport_size(e.width, e.height);
 			if (m_gui) m_gui->on_resize();
+			m_postprc->on_resize(e.width, e.height);
 			});
 		m_event_dispather.add_event_listener<EventMouseButtonPressed>([&](EventMouseButtonPressed& e)
 			{
@@ -170,6 +151,10 @@ public:
 		m_event_dispather.add_event_listener<EventMouseButtonReleased>([&](EventMouseButtonReleased& e)
 			{
 				if (m_gui) m_gui->on_mouse_release(e.x_pos, e.y_pos);
+			});
+		m_event_dispather.add_event_listener<EventKeyReleased>([&](EventKeyReleased& e)
+			{
+				isKeyPressed = false;
 			});
 		m_event_dispather.add_event_listener<EventMouseScrolled>([&](EventMouseScrolled& e)
 			{
@@ -199,6 +184,12 @@ public:
 		glm::vec3 rotation_delta{ 0,0,0 };
 
 		double addSpeed = 1;
+
+		if (Input::isKeyPressed(KeyCode::KEY_R) && !isKeyPressed)
+		{
+			m_postprc->change_active();
+			isKeyPressed = true;
+		}
 
 		if (Input::isKeyPressed(KeyCode::KEY_W))
 		{
@@ -242,37 +233,25 @@ public:
 
 	void on_render()
 	{
-		m_framebuffer->bind();
-		RenderEngine::Renderer::setDepthTest(true);
-		RenderEngine::Renderer::setClearColor(0.1f, 0.1f, 0.1f, 1.f);
-		RenderEngine::Renderer::clearColor();
+		m_postprc->start_render();
+
+		RenderEngine::Renderer::setClearColor(0.8f, 0.8f, 0.8f, 1.f);
+		RenderEngine::Renderer::clear();
 
 		m_scene.render(m_cam->get_projection_matrix() * m_cam->get_view_matrix());
 
-		glBindVertexArray(0);
-		// real draw --------------------------------------------------------------------------------------
-		m_framebuffer->unbind();
-		RenderEngine::Renderer::setDepthTest(false);
-		RenderEngine::Renderer::setClearColor(1.f, 1.f, 1.f, 1.f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		//RenderEngine::Renderer::clearColor();
-
-		ResourceManager::getShaderProgram("postShader")->use();
-
-		glBindVertexArray(quadVAO);
-		m_framebuffer->bind_texture();
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-
-		m_framebuffer->unbind_texture();
+		m_postprc->end_render();
 	}
 
 	void on_ui_render()
 	{
-		m_gui->on_render();		
+		m_postprc->start_gui_rendering();
+
+		m_gui->on_render();
 	}
 
 private:	
-	RenderEngine::FrameBuffer* m_framebuffer;
+	RenderEngine::PostProcessor* m_postprc;
 
 	std::shared_ptr<GraphicsObject> m_obj;
 

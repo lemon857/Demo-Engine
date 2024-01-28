@@ -28,13 +28,6 @@
       ]
     },
     {
-      "name": "mainShader",
-      "filePath_v": "systemres/shaders/mainVert.glsl",
-      "filePath_f": "systemres/shaders/mainFrag.glsl",
-      "layout": [
-      ]
-    },
-    {
       "name": "postShader",
       "filePath_v": "systemres/shaders/postVert.glsl",
       "filePath_f": "systemres/shaders/postFrag.glsl",
