@@ -14,6 +14,7 @@
 #include <EngineCore/Meshes/Cube.h>
 #include <EngineCore/Meshes/GraphicsModel.h>
 #include <EngineCore/Components/Transform.h>
+#include <EngineCore/Components/Highlight.h>
 #include <EngineCore/GUI/GUI_place.h>
 #include <EngineCore/GUI/ScrollBox.h>
 #include <EngineCore/GUI/Button.h>
@@ -40,6 +41,8 @@ public:
 	{
 		m_postprc = new RenderEngine::PostProcessor(ResourceManager::getShaderProgram("postShader"), m_pWindow->get_size().x, m_pWindow->get_size().y);
 
+		m_postprc->set_effect(3);
+
 		GET_DATA_MATERIAL("castle", float, "ambient_factor", 0) = 0.5f;
 		GET_DATA_MATERIAL("castle", float, "diffuse_factor", 0) = 0.1f;
 		GET_DATA_MATERIAL("castle", float, "specular_factor", 0) = 0.0f;
@@ -47,14 +50,16 @@ public:
 		GET_DATA_MATERIAL("castle", float, "shininess", 0) = 0.1f;
 		GET_DATA_MATERIAL("castle", int, "level_graphics", 0) = 1;
 
-		GET_DATA_MATERIAL("defaultCube", float, "ambient_factor", 0) = 0.5f;
+		GET_DATA_MATERIAL("defaultCube", float, "ambient_factor", 0) = 0.6f;
 		GET_DATA_MATERIAL("defaultCube", float, "diffuse_factor", 0) = 0.1f;
 		GET_DATA_MATERIAL("defaultCube", float, "specular_factor", 0) = 0.0f;
 		GET_DATA_MATERIAL("defaultCube", float, "metalic_factor", 0) = 0.0f;
 		GET_DATA_MATERIAL("defaultCube", float, "shininess", 0) = 0.1f;
 		GET_DATA_MATERIAL("defaultCube", int, "level_graphics", 0) = 1;
 
-		GET_DATA_MATERIAL("default", float, "sourceColor", 2) = 1.f;
+		GET_DATA_MATERIAL("default", float, "sourceColor", 0) = 0.8f;
+		GET_DATA_MATERIAL("default", float, "sourceColor", 1) = 0.3f;
+		GET_DATA_MATERIAL("default", float, "sourceColor", 2) = 0.6f;
 		GET_DATA_MATERIAL("default", float, "sourceColor", 3) = 1.f;
 
 		m_cam = new Camera();
@@ -67,11 +72,11 @@ public:
 		names.push_back("default3DShader");
 
 		m_scene.add_object<DirectionalLight>(names);
-		m_scene.add_object<Cube>(ResourceManager::getMaterial("defaultCube"));
-		m_scene.add_object<GraphicsModel>(ResourceManager::getGraphicsObject("castle"), ResourceManager::getMaterial("castle"));
-
-		m_scene.at(1)->addComponent<Transform>(glm::vec3(0.f), glm::vec3(2.f));
-		m_scene.at(2)->addComponent<Transform>(glm::vec3(0.f, 0.f, 1.f), glm::vec3(2.f));
+		cube = new Cube(ResourceManager::getMaterial("castle"));
+		model = new GraphicsModel(ResourceManager::getGraphicsObject("castle"), ResourceManager::getMaterial("castle"));
+		model->addComponent<Highlight>(ResourceManager::getMaterial("default"), true, true, glm::vec3(0.f));
+		//m_scene.at(1)->addComponent<Transform>(glm::vec3(0.f), glm::vec3(2.f));
+		//m_scene.at(2)->addComponent<Transform>(glm::vec3(0.f, 0.f, 1.f), glm::vec3(2.f));
 
 		m_gui = new GUI::GUI_place(m_cam, ResourceManager::getMaterial("default"));
 
@@ -114,7 +119,7 @@ public:
 			ResourceManager::get_font("agaaler"), glm::vec3(1.f), "b7");
 
 		m_gui->add_element<GUI::ScrollBox>(new GUI::Sprite(ResourceManager::getMaterial("defaultSprite")),
-			glm::vec2(50.f, 50.f), glm::vec2(12.f, 15.f), "TestScrollbox", 10, ResourceManager::getMaterial("default"), false, nullptr, false, false);
+			glm::vec2(50.f, 50.f), glm::vec2(40.f, 25.f), "TestScrollbox", 10, ResourceManager::getMaterial("default"), false, nullptr, true, false);
 
 		m_gui->get_element<GUI::ScrollBox>("TestScrollbox")->add_element(m_gui->get_element<GUI::Button>("b1"));
 		m_gui->get_element<GUI::ScrollBox>("TestScrollbox")->add_element(m_gui->get_element<GUI::Button>("b2"));
@@ -126,8 +131,10 @@ public:
 
 		m_gui->get_element<GUI::ScrollBox>("TestScrollbox")->set_active(true);
 
-		m_gui->set_active(true);
+		m_gui->set_active(false);
 
+		m_postprc->set_active(false);
+		
 		return true;
 	}
 
@@ -238,15 +245,24 @@ public:
 		RenderEngine::Renderer::setClearColor(0.8f, 0.8f, 0.8f, 1.f);
 		RenderEngine::Renderer::clear();
 
-		m_scene.render(m_cam->get_projection_matrix() * m_cam->get_view_matrix());
+		// set matrix
+		ResourceManager::getShaderProgram("colorShader")->use();
+		ResourceManager::getShaderProgram("colorShader")->setMatrix4(SS_VIEW_PROJECTION_MATRIX_NAME, m_cam->get_projection_matrix() * m_cam->get_view_matrix());
+		ResourceManager::getShaderProgram("colorShader")->setVec4(SS_COLOR_PROP_NAME, glm::vec4(1.f, 0.33f, 0.33f, 1.f));
+
+		ResourceManager::getShaderProgram("default3DShader")->use();
+		ResourceManager::getShaderProgram("default3DShader")->setVec3("cam_position", m_cam->get_position());
+		ResourceManager::getShaderProgram("default3DShader")->setFloat("brightness", 1);
+		ResourceManager::getShaderProgram("default3DShader")->setMatrix4(SS_VIEW_PROJECTION_MATRIX_NAME, m_cam->get_projection_matrix() * m_cam->get_view_matrix());
+
+
+		model->render();
 
 		m_postprc->end_render();
 	}
 
 	void on_ui_render()
 	{
-		m_postprc->start_gui_rendering();
-
 		m_gui->on_render();
 	}
 
@@ -256,6 +272,9 @@ private:
 	std::shared_ptr<GraphicsObject> m_obj;
 
 	unsigned int quadVAO, quadVBO;
+
+	Cube* cube;
+	GraphicsModel* model;
 
 	GUI::GUI_place* m_gui;
 	Camera* m_cam;

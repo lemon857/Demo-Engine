@@ -4,22 +4,34 @@ in vec2 TextureCoords;
 
 out vec4 fragColor;
 
-const float offset = 1.0 / 1000.0;
+const float offset = 1.0 / 2700.0;
+const float offsetblur = 1.0 / 650.0;
+const float minVal = 0.1;
 
+vec2 reverseMaxSize = vec2(1);
 uniform sampler2D renderTexture;
 uniform sampler2D depthTexture;
 
+uniform int cur_effect;
  //fragColor = vec4(texture(texture1, TextureCoords).rgb, 1.0);
 
  vec4 kernel_effect()
  {
 	float kernel[9] = float[](
-		-1, -1, -1,
-		-1, 9, -1,
-		-1, -1, -1
+		0, -1, 0,
+		-1, 5.05, -1,
+		0, -1, 0
 	);
 
 	vec4 col = vec4(0.0);
+
+	//if (texture(realTexture, TextureCoords).x < minVal
+	//&& texture(realTexture, TextureCoords).y < minVal
+	//&& texture(realTexture, TextureCoords).z < minVal)
+	//{
+	//	return texture(realTexture, TextureCoords);		
+	//}
+
 	col += kernel[0] * texture(renderTexture, TextureCoords.st + vec2(-offset, offset));
 	col += kernel[1] * texture(renderTexture, TextureCoords.st + vec2(0.0, offset));
 	col += kernel[2] * texture(renderTexture, TextureCoords.st + vec2(offset, offset));
@@ -33,6 +45,36 @@ uniform sampler2D depthTexture;
 	return col;
  }
 
+ vec4 blur_effect()
+ {
+	float kernel[9] = float[](
+    1.0 / 16, 2.0 / 16, 1.0 / 16,
+    2.0 / 16, 4.0 / 16, 2.0 / 16,
+    1.0 / 16, 2.0 / 16, 1.0 / 16  
+);
+
+	vec4 col = vec4(0.0);
+
+	//if (texture(realTexture, TextureCoords).x < minVal
+	//&& texture(realTexture, TextureCoords).y < minVal
+	//&& texture(realTexture, TextureCoords).z < minVal)
+	//{
+	//	return texture(realTexture, TextureCoords);		
+	//}
+
+	col += kernel[0] * texture(renderTexture, TextureCoords.st + vec2(-offsetblur, offsetblur));
+	col += kernel[1] * texture(renderTexture, TextureCoords.st + vec2(0.0, offsetblur));
+	col += kernel[2] * texture(renderTexture, TextureCoords.st + vec2(offsetblur, offsetblur));
+	col += kernel[3] * texture(renderTexture, TextureCoords.st + vec2(-offsetblur, 0.0));
+	col += kernel[4] * texture(renderTexture, TextureCoords.st + vec2(0.0, 0.0));
+	col += kernel[5] * texture(renderTexture, TextureCoords.st + vec2(offsetblur, 0.0));
+	col += kernel[6] * texture(renderTexture, TextureCoords.st + vec2(-offsetblur, -offsetblur));
+	col += kernel[7] * texture(renderTexture, TextureCoords.st + vec2(0.0, offsetblur));
+	col += kernel[8] * texture(renderTexture, TextureCoords.st + vec2(offsetblur, offsetblur));
+
+	return col;
+ }
+
  vec4 grascale_effect()
  { 
 	vec4 col = vec4(texture(renderTexture, TextureCoords).rgb, 1.0);
@@ -40,7 +82,36 @@ uniform sampler2D depthTexture;
 	return vec4(d, d, d, 1.0);
  }
 
-void main() {	
+ vec4 highlight()
+ {
+	vec4 baseColor = texture(renderTexture, TextureCoords);
+	vec4 depthColor = texture(depthTexture, TextureCoords);
+	float sum = 0.0f;
+	float my = texture2D(depthTexture, TextureCoords).x;
+	sum += texture2D(depthTexture, TextureCoords + vec2(+1, 0)).x;
+	sum += texture2D(depthTexture, TextureCoords + vec2(-1, 0)).x;
+	sum += texture2D(depthTexture, TextureCoords + vec2(0, +1)).x;
+	sum += texture2D(depthTexture, TextureCoords + vec2(0, -1)).x;
+	float d = sum / my - 4.0f;
+	return baseColor;
+ }
 
-	fragColor = kernel_effect();
+void main()
+{
+	vec4 col = vec4(0.0);
+	switch(cur_effect)
+	{
+		case 0:
+			col = texture(renderTexture, TextureCoords);
+			break;
+		case 1:
+			col = blur_effect();
+			break;
+		case 2:
+			col = grascale_effect();
+			break;
+		case 3:
+			col = kernel_effect();
+	}
+	fragColor = col;
 }
