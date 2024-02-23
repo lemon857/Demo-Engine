@@ -7,6 +7,7 @@
 #include <EngineCore/Renderer/Camera.h>
 #include <EngineCore/Renderer/PostProcessor.h>
 #include <EngineCore/Renderer/Material.h>
+#include <EngineCore/Renderer3D/Skybox.h>
 #include <EngineCore/Renderer3D/GraphicsObject.h>
 #include <EngineCore/Light/DirectionalLight.h>
 #include <EngineCore/System/ShadersSettings.h>
@@ -16,11 +17,14 @@
 #include <EngineCore/Components/Transform.h>
 #include <EngineCore/Components/Highlight.h>
 #include <EngineCore/GUI/GUI_place.h>
+#include <EngineCore/GUI/TextRenderer.h>
 #include <EngineCore/GUI/ScrollBox.h>
 #include <EngineCore/GUI/Button.h>
 #include <EngineCore/GUI/Sprite.h>
 #include <EngineCore/GUI/Font.h>
 #include <EngineCore/GUI/ScrollBox.h>
+
+#include <vector>
 
 #define GET_DATA_MATERIAL(name_material, type, name_data, index) ResourceManager::getMaterial(name_material)->get_data<type>(name_data)[index]
 
@@ -74,7 +78,7 @@ public:
 		m_scene.add_object<DirectionalLight>(names);
 		cube = new Cube(ResourceManager::getMaterial("castle"));
 		model = new GraphicsModel(ResourceManager::getGraphicsObject("castle"), ResourceManager::getMaterial("castle"));
-		model->addComponent<Highlight>(ResourceManager::getMaterial("default"), true, true, glm::vec3(0.f));
+		model->addComponent<Highlight>(ResourceManager::getMaterial("default"), true, true, glm::vec3(1.f));
 		//m_scene.at(1)->addComponent<Transform>(glm::vec3(0.f), glm::vec3(2.f));
 		//m_scene.at(2)->addComponent<Transform>(glm::vec3(0.f, 0.f, 1.f), glm::vec3(2.f));
 
@@ -129,12 +133,28 @@ public:
 		m_gui->get_element<GUI::ScrollBox>("TestScrollbox")->add_element(m_gui->get_element<GUI::Button>("b6"));
 		m_gui->get_element<GUI::ScrollBox>("TestScrollbox")->add_element(m_gui->get_element<GUI::Button>("b7"));
 
-		m_gui->get_element<GUI::ScrollBox>("TestScrollbox")->set_active(true);
+		m_gui->get_element<GUI::ScrollBox>("TestScrollbox")->set_active(false);
 
-		m_gui->set_active(false);
+		m_gui->add_element<GUI::TextRenderer>(-2, ResourceManager::get_font("calibriChat"), ResourceManager::getShaderProgram("textShader"),
+			"FPS: 0", glm::vec3(0.f), glm::vec2(0.1f, offset), glm::vec2(0.5f), "fps", false);
+
+		m_gui->set_active(true);
 
 		m_postprc->set_active(false);
-		
+
+		std::vector<std::string> faces
+		{
+			"systemres/textures/skybox_1/right.jpg",
+			"systemres/textures/skybox_1/left.jpg",
+			"systemres/textures/skybox_1/top.jpg",
+			"systemres/textures/skybox_1/bottom.jpg",
+			"systemres/textures/skybox_1/front.jpg",
+			"systemres/textures/skybox_1/back.jpg"
+		};
+		skybox = new RenderEngine::Skybox(faces, ResourceManager::getShaderProgram("skyboxShader").get());
+
+		m_cam->set_far_clip_plane(300);
+
 		return true;
 	}
 
@@ -240,6 +260,9 @@ public:
 
 	void on_render()
 	{
+		RenderEngine::Renderer::setClearColor(0.8f, 0.8f, 0.8f, 1.f);
+		RenderEngine::Renderer::clear();
+
 		m_postprc->start_render();
 
 		RenderEngine::Renderer::setClearColor(0.8f, 0.8f, 0.8f, 1.f);
@@ -254,19 +277,22 @@ public:
 		ResourceManager::getShaderProgram("default3DShader")->setVec3("cam_position", m_cam->get_position());
 		ResourceManager::getShaderProgram("default3DShader")->setFloat("brightness", 1);
 		ResourceManager::getShaderProgram("default3DShader")->setMatrix4(SS_VIEW_PROJECTION_MATRIX_NAME, m_cam->get_projection_matrix() * m_cam->get_view_matrix());
-
-
+		
 		model->render();
 
-		m_postprc->end_render();
+		m_postprc->end_render();	
+
+		skybox->render(m_cam->get_projection_matrix() * glm::mat4(glm::mat3(m_cam->get_view_matrix())));
 	}
 
 	void on_ui_render()
 	{
+		m_gui->get_element<GUI::TextRenderer>("fps")->set_text("FPS: " + std::to_string(m_current_fps));
 		m_gui->on_render();
 	}
 
 private:	
+	RenderEngine::Skybox* skybox;
 	RenderEngine::PostProcessor* m_postprc;
 
 	std::shared_ptr<GraphicsObject> m_obj;

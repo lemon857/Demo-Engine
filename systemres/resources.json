@@ -15,6 +15,13 @@
       ]
     },
     {
+      "name": "skyboxShader",
+      "filePath_v": "systemres/shaders/skyboxVert.glsl",
+      "filePath_f": "systemres/shaders/skyboxFrag.glsl",
+      "layout": [
+      ]
+    },
+    {
       "name": "colorShader",
       "filePath_v": "systemres/shaders/colorVert.glsl",
       "filePath_f": "systemres/shaders/colorFrag.glsl",
