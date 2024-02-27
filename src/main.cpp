@@ -29,6 +29,7 @@
 #define GET_DATA_MATERIAL(name_material, type, name_data, index) ResourceManager::getMaterial(name_material)->get_data<type>(name_data)[index]
 
 bool isKeyPressed = false;
+bool enableMSAA = false;
 
 class TestApp : public Application
 {
@@ -43,9 +44,11 @@ public:
 	}
 	bool init() override
 	{
-		m_postprc = new RenderEngine::PostProcessor(ResourceManager::getShaderProgram("postShader"), m_pWindow->get_size().x, m_pWindow->get_size().y);
+		m_postprc = new RenderEngine::PostProcessor(ResourceManager::getShaderProgram("postShader"), m_pWindow->get_size().x, m_pWindow->get_size().y, true, 8);
 
-		m_postprc->set_effect(3);
+		m_postprc->set_effect(0);
+
+		m_count_fps_check = 10;
 
 		GET_DATA_MATERIAL("castle", float, "ambient_factor", 0) = 0.5f;
 		GET_DATA_MATERIAL("castle", float, "diffuse_factor", 0) = 0.1f;
@@ -77,8 +80,22 @@ public:
 
 		m_scene.add_object<DirectionalLight>(names);
 		cube = new Cube(ResourceManager::getMaterial("castle"));
-		model = new GraphicsModel(ResourceManager::getGraphicsObject("castle"), ResourceManager::getMaterial("castle"));
-		model->addComponent<Highlight>(ResourceManager::getMaterial("default"), true, true, glm::vec3(1.f));
+		models.push_back(new GraphicsModel(ResourceManager::getGraphicsObject("castle"), ResourceManager::getMaterial("castle")));
+		models.back()->addComponent<Transform>(glm::vec3(0.f, 0.f, 0.f));
+		models.push_back(new GraphicsModel(ResourceManager::getGraphicsObject("castle"), ResourceManager::getMaterial("castle")));
+		models.back()->addComponent<Transform>(glm::vec3(5.f, 0.f, 0.f));
+		models.push_back(new GraphicsModel(ResourceManager::getGraphicsObject("castle"), ResourceManager::getMaterial("castle")));
+		models.back()->addComponent<Transform>(glm::vec3(10.f, 0.f, 0.f));
+		models.push_back(new GraphicsModel(ResourceManager::getGraphicsObject("castle"), ResourceManager::getMaterial("castle")));
+		models.back()->addComponent<Transform>(glm::vec3(15.f, 0.f, 0.f));
+		models.push_back(new GraphicsModel(ResourceManager::getGraphicsObject("castle"), ResourceManager::getMaterial("castle")));
+		models.back()->addComponent<Transform>(glm::vec3(20.f, 0.f, 0.f));
+		models.push_back(new GraphicsModel(ResourceManager::getGraphicsObject("castle"), ResourceManager::getMaterial("castle")));
+		models.back()->addComponent<Transform>(glm::vec3(25.f, 0.f, 0.f));
+		models.push_back(new GraphicsModel(ResourceManager::getGraphicsObject("castle"), ResourceManager::getMaterial("castle")));
+		models.back()->addComponent<Transform>(glm::vec3(30.f, 0.f, 0.f));
+		//model->addComponent<Highlight>(ResourceManager::getMaterial("default"), true, true, glm::vec3(1.f));
+		
 		//m_scene.at(1)->addComponent<Transform>(glm::vec3(0.f), glm::vec3(2.f));
 		//m_scene.at(2)->addComponent<Transform>(glm::vec3(0.f, 0.f, 1.f), glm::vec3(2.f));
 
@@ -137,10 +154,18 @@ public:
 
 		m_gui->add_element<GUI::TextRenderer>(-2, ResourceManager::get_font("calibriChat"), ResourceManager::getShaderProgram("textShader"),
 			"FPS: 0", glm::vec3(0.f), glm::vec2(0.1f, offset), glm::vec2(0.5f), "fps", false);
+		offset += 5.f;
+
+		m_gui->add_element<GUI::TextRenderer>(-2, ResourceManager::get_font("calibriChat"), ResourceManager::getShaderProgram("textShader"),
+			"disable", glm::vec3(0.f), glm::vec2(0.1f, offset), glm::vec2(0.5f), "switch", false);
+		offset += 5.f;
+
+		m_gui->add_element<GUI::TextRenderer>(-2, ResourceManager::get_font("calibriChat"), ResourceManager::getShaderProgram("textShader"),
+			"-", glm::vec3(0.f), glm::vec2(0.1f, offset), glm::vec2(0.5f), "switch1", false);
 
 		m_gui->set_active(true);
 
-		m_postprc->set_active(false);
+		m_postprc->set_active(true);
 
 		std::vector<std::string> faces
 		{
@@ -215,7 +240,42 @@ public:
 		if (Input::isKeyPressed(KeyCode::KEY_R) && !isKeyPressed)
 		{
 			m_postprc->change_active();
+			m_gui->get_element<GUI::TextRenderer>("switch1")->set_text(m_postprc->get_active() ? "+" : "-");
 			isKeyPressed = true;
+		}
+		else if (Input::isKeyPressed(KeyCode::KEY_T) && !isKeyPressed)
+		{
+			if (enableMSAA)
+			{
+				m_gui->get_element<GUI::TextRenderer>("switch")->set_text("disable");
+				//RenderEngine::Renderer::setActiveMultisampling(false);
+				m_postprc->set_acive_msaa(false);
+				enableMSAA = false;
+			}
+			else
+			{
+				m_gui->get_element<GUI::TextRenderer>("switch")->set_text("enable");
+				//RenderEngine::Renderer::setActiveMultisampling(true);
+				m_postprc->set_acive_msaa(true);
+				enableMSAA = true;
+			}
+			isKeyPressed = true;
+		}
+		else if (Input::isKeyPressed(KeyCode::KEY_L) && !isKeyPressed)
+		{
+			m_postprc->set_effect(0);
+		}
+		else if (Input::isKeyPressed(KeyCode::KEY_K) && !isKeyPressed)
+		{
+			m_postprc->set_effect(1);
+		}
+		else if (Input::isKeyPressed(KeyCode::KEY_J) && !isKeyPressed)
+		{
+			m_postprc->set_effect(2);
+		}
+		else if (Input::isKeyPressed(KeyCode::KEY_H) && !isKeyPressed)
+		{
+			m_postprc->set_effect(3);
 		}
 
 		if (Input::isKeyPressed(KeyCode::KEY_W))
@@ -260,13 +320,12 @@ public:
 
 	void on_render()
 	{
-		RenderEngine::Renderer::setClearColor(0.8f, 0.8f, 0.8f, 1.f);
-		RenderEngine::Renderer::clear();
-
 		m_postprc->start_render();
 
 		RenderEngine::Renderer::setClearColor(0.8f, 0.8f, 0.8f, 1.f);
 		RenderEngine::Renderer::clear();
+		RenderEngine::Renderer::setStencilTest(false);
+		RenderEngine::Renderer::setStencilMask(true);
 
 		// set matrix
 		ResourceManager::getShaderProgram("colorShader")->use();
@@ -278,11 +337,14 @@ public:
 		ResourceManager::getShaderProgram("default3DShader")->setFloat("brightness", 1);
 		ResourceManager::getShaderProgram("default3DShader")->setMatrix4(SS_VIEW_PROJECTION_MATRIX_NAME, m_cam->get_projection_matrix() * m_cam->get_view_matrix());
 		
-		model->render();
-
-		m_postprc->end_render();	
+		for (auto& model : models)
+		{
+			model->render();
+		}
 
 		skybox->render(m_cam->get_projection_matrix() * glm::mat4(glm::mat3(m_cam->get_view_matrix())));
+
+		m_postprc->end_render();
 	}
 
 	void on_ui_render()
@@ -291,7 +353,8 @@ public:
 		m_gui->on_render();
 	}
 
-private:	
+private:
+
 	RenderEngine::Skybox* skybox;
 	RenderEngine::PostProcessor* m_postprc;
 
@@ -300,7 +363,7 @@ private:
 	unsigned int quadVAO, quadVBO;
 
 	Cube* cube;
-	GraphicsModel* model;
+	std::vector<GraphicsModel*> models;
 
 	GUI::GUI_place* m_gui;
 	Camera* m_cam;

@@ -4,7 +4,7 @@ in vec2 TextureCoords;
 
 out vec4 fragColor;
 
-const float offset = 1.0 / 2700.0;
+const float offset = 1.0 / 6000.0;
 const float offsetblur = 1.0 / 650.0;
 const float minVal = 0.1;
 
@@ -13,6 +13,7 @@ uniform sampler2D renderTexture;
 uniform sampler2D depthTexture;
 
 uniform int cur_effect;
+
  //fragColor = vec4(texture(texture1, TextureCoords).rgb, 1.0);
 
  vec4 kernel_effect()
@@ -82,20 +83,6 @@ uniform int cur_effect;
 	return vec4(d, d, d, 1.0);
  }
 
- vec4 highlight()
- {
-	vec4 baseColor = texture(renderTexture, TextureCoords);
-	vec4 depthColor = texture(depthTexture, TextureCoords);
-	float sum = 0.0f;
-	float my = texture2D(depthTexture, TextureCoords).x;
-	sum += texture2D(depthTexture, TextureCoords + vec2(+1, 0)).x;
-	sum += texture2D(depthTexture, TextureCoords + vec2(-1, 0)).x;
-	sum += texture2D(depthTexture, TextureCoords + vec2(0, +1)).x;
-	sum += texture2D(depthTexture, TextureCoords + vec2(0, -1)).x;
-	float d = sum / my - 4.0f;
-	return baseColor;
- }
-
 void main()
 {
 	vec4 col = vec4(0.0);
@@ -112,6 +99,11 @@ void main()
 			break;
 		case 3:
 			col = kernel_effect();
+			break;
+		default:
+			col = texture(renderTexture, TextureCoords);
+			break;
 	}
+	
 	fragColor = col;
 }
