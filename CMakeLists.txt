@@ -10,13 +10,13 @@ add_executable(${PROJECT_NAME}
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
-add_subdirectory(external/Engine)
+add_subdirectory(external/CppEngine)
 
 target_link_libraries(${PROJECT_NAME} EngineCore)
 
 target_include_directories(${PROJECT_NAME} PRIVATE includes)
-include_directories(external/Engine/includes)
-include_directories(external/Engine/external/glm)
+include_directories(external/CppEngine/includes)
+include_directories(external/CppEngine/external/glm)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/)
 					

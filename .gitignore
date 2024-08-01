@@ -1,5 +1,5 @@
 build
-external/Engine
+external
 # Prerequisites
 *.d
 *.aps
